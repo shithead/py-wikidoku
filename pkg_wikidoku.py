@@ -165,7 +165,7 @@ def get_configured_ports():
     return sorted(configed_ports_dirs)
 
 def get_installed_ports():
-    installed_ports = str( subprocess.check_output( [ 'cat','ports' ] ), 'UTF-8')
+    installed_ports = str( subprocess.check_output( [ 'pkg_info','-a','-E' ] ), 'UTF-8')
     installed_ports_list = sorted(installed_ports.splitlines())
     # TODO search for error with obsolate version-tag in port parsing (e.g.
     # perl-threaded)

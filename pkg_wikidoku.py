@@ -1,4 +1,4 @@
-#!/usr/local/bin/python3
+#!/usr/local/bin/python3.3
 
 import os
 import re
@@ -23,15 +23,17 @@ def errPrint( errorcode = os.EX_SOFTWARE, msg = None ):
         sys.exit( errorcode )
 
 def systemCheck():
-    if sys.platform.startswith('freebsd'):
-        print('Your OS is EVIL!!!')
-    else:
+  """  if sys.platform.startswith('freebsd'):
+       print('Your OS is EVIL!!!')
+       else:
         print('Your OS is LAME!!!')
-        sys.exit( os.EX_OSERR )
-
+       sys.exit( os.EX_OSERR )
+"""
 # XXX headline more fancy idea
 # def headder(inum):
 #     return "="*inum
+# überprüfen ob port installiert
+# jails automatisieren
 
 # 'wiki_config_port' beschreibt die 'wikifp' aus der Liste
 # 'avail_configed_ports' erhaltenden Portnamen die Konfigurationen.
@@ -54,10 +56,13 @@ def wiki_pkg_list(configured_ports, installed_ports):
     # {{{
     # Informationen Paaren zwischen Portbezeichnung und Packetname
     # Durch den Index der Liste 'configured_ports gehen'
+    #prefix abschneiden
     for config_index in range( len(configured_ports) ):
         value = re.match( ex_tilt_dir_prefix, \
-                        configured_ports[config_index]).group(1)
-        # speichern des Pfades zu den Optionen
+                        configured_ports[config_index])
+        if value:
+            value = value.group(1)
+        # speichern des Pfades zu den Optionen /var/db/ports/$port/options
         option_path = os.path.join(ports_db_path,
                 configured_ports[ config_index ],
                 'options')
@@ -125,6 +130,7 @@ def wiki_pkg_list(configured_ports, installed_ports):
             wikifp.write( '#{0} | {0}]]\n'.format( available_port ))
             # FIXME 1 {{{
             for dir_key in avail_configed_ports.keys():
+
                 if available_port in avail_configed_ports[dir_key]:
                     print("%s %s" %(available_port, avail_configed_ports[dir_key] ))
                     avail_configed_ports.update({ dir_key: available_port } )
@@ -159,12 +165,13 @@ def get_configured_ports():
     return sorted(configed_ports_dirs)
 
 def get_installed_ports():
-    installed_ports = str( subprocess.check_output( [ 'pkg_info', '-a', '-E' ] ), 'UTF-8')
+    installed_ports = str( subprocess.check_output( [ 'cat','ports' ] ), 'UTF-8')
     installed_ports_list = sorted(installed_ports.splitlines())
     # TODO search for error with obsolate version-tag in port parsing (e.g.
     # perl-threaded)
     cnext = False
-    for installed_ports_idx in range( 0, len( installed_ports_list ) ):
+    saved_port=None
+    for installed_ports_idx in range( 0, len( installed_ports_list  ) ):
         if (cnext):
             cnext = False
             continue
@@ -173,41 +180,43 @@ def get_installed_ports():
                                 installed_ports_list[installed_ports_idx] )
         # Prüfen auf letzten _idx um die regex zu ignorieren
         # und die Variable auf 'None' zusetzen
-        if installed_ports_idx != ( len(installed_ports_list) - 1 ) :
+        if installed_ports_idx != ( len(installed_ports_list) -1 ) :
             next_installed_port = re.match( ex_name_version,
                                 installed_ports_list[installed_ports_idx + 1] )
         else:
             next_installed_port = None
-
+            installed_ports_list[ installed_ports_idx ] = \
+                                                    installed_port.group(1)[:-1]
         # Prüfe ob die Variablen ´gefüllt´ sind.
-        #
-        # 'else' ist für den Fall das keine Version
-        # ´gematch´ werden kann und dient der Speicherung des Portnamen
         if next_installed_port is not None and installed_port is not None:
             # Teste ob der Portname identisch ist und speichere Portname und Versionen
-            #
-            # Bei 'else:' speichere nur von 'installed_port' den Portnamen
+            # speichere letzten identischen Portnamen und resete die Variablen
             if  installed_port.group(1) == next_installed_port.group(1):
+                saved_port=installed_port
                 installed_ports_list[ installed_ports_idx ] = \
                                                     installed_port.group(0)
                 installed_ports_list[ installed_ports_idx + 1 ] = \
                                                     next_installed_port.group(0)
                 cnext = True
-            else:
-                installed_ports_list[ installed_ports_idx ] = \
+                installed_port=None
+                next_installed_port=None
+        # Falls installed_port nicht None ist (kein Match im letzten If / kein next_port)
+        # überprüfe ob es mit dem gespeicherten Portnamen matched
+        # falls nicht, resete saved_port und speichern ohne Versionsnummer
+        if installed_port:
+                if saved_port:
+                    if installed_port.group(1) == saved_port.group(1):
+                        installed_ports_list[ installed_ports_idx ] = \
+                                                        installed_port.group(0)
+                    else:
+                        saved_port=None
+                        installed_ports_list[ installed_ports_idx ] = \
+                                                        installed_port.group(1)
+        # Falls es kein saved_port gibt speichern ohne versionsnummer
+                else:
+                    installed_ports_list[ installed_ports_idx ] = \
                                                     installed_port.group(1)[:-1]
-        # Prüfe ob die Varible nicht Leer ist und speichere den Portnamen
-        # TODO prüfen ob man die elif auch weglassen kann.
-        elif installed_port is not None:
-            installed_ports_list[ installed_ports_idx ] = \
-                                                    installed_port.group(1)[:-1]
-        else:
-            installed_port = \
-                    re.match( ex_name, installed_ports_list[installed_ports_idx] )
-            installed_ports_list[ installed_ports_idx ] = \
-                                                    installed_port.group(1)[:-1]
-
-        installed_port = None
+                installed_port = None
 
     return sorted(installed_ports_list)
 
@@ -215,8 +224,11 @@ def main(ports_db_path):
     systemCheck()
     configed_ports = get_configured_ports()
     installed_ports = get_installed_ports()
-    wiki_pkg_list(configed_ports, installed_ports)
-
+#    for port in configed_ports:
+#        print(port)
+#    print('\n')
+    for port in installed_ports:
+        print(port)
 if __name__ == "__main__":
     try:
         main(ports_db_path)

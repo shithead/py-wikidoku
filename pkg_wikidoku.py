@@ -164,6 +164,7 @@ def get_installed_ports():
     # TODO search for error with obsolate version-tag in port parsing (e.g.
     # perl-threaded)
     cnext = False
+    saved_port = None
     for installed_ports_idx in range( 0, len( installed_ports_list ) ):
         if (cnext):
             cnext = False
@@ -173,41 +174,44 @@ def get_installed_ports():
                                 installed_ports_list[installed_ports_idx] )
         # Prüfen auf letzten _idx um die regex zu ignorieren
         # und die Variable auf 'None' zusetzen
-        if installed_ports_idx != ( len(installed_ports_list) - 1 ) :
+        if installed_ports_idx != ( len(installed_ports_list) -1 ) :
             next_installed_port = re.match( ex_name_version,
                                 installed_ports_list[installed_ports_idx + 1] )
         else:
             next_installed_port = None
-
+            installed_ports_list[ installed_ports_idx ] = \
+                                                    installed_port.group(1)[:-1]
         # Prüfe ob die Variablen ´gefüllt´ sind.
-        #
-        # 'else' ist für den Fall das keine Version
-        # ´gematch´ werden kann und dient der Speicherung des Portnamen
         if next_installed_port is not None and installed_port is not None:
             # Teste ob der Portname identisch ist und speichere Portname und Versionen
-            #
-            # Bei 'else:' speichere nur von 'installed_port' den Portnamen
+            # speichere letzten identischen Portnamen und resete die Variablen
             if  installed_port.group(1) == next_installed_port.group(1):
+                saved_port = installed_port
                 installed_ports_list[ installed_ports_idx ] = \
                                                     installed_port.group(0)
                 installed_ports_list[ installed_ports_idx + 1 ] = \
                                                     next_installed_port.group(0)
                 cnext = True
-            else:
-                installed_ports_list[ installed_ports_idx ] = \
+                installed_port = None
+                next_installed_port = None
+        # Falls 'installed_port' nicht 'None' ist (kein Match im letzten 
+        # 'If' / kein 'next_installed_port')
+        # Überprüfe ob es mit dem gespeicherten Portnamen matched
+        # falls nicht, resete 'saved_port' und speichern ohne Versionsnummer
+        if installed_port:
+                if saved_port:
+                    if installed_port.group(1) == saved_port.group(1):
+                        installed_ports_list[ installed_ports_idx ] = \
+                                                        installed_port.group(0)
+                    else:
+                        saved_port = None
+                        installed_ports_list[ installed_ports_idx ] = \
+                                                        installed_port.group(1)
+                # Falls es kein 'saved_port' gibt speichern ohne versionsnummer
+                else:
+                    installed_ports_list[ installed_ports_idx ] = \
                                                     installed_port.group(1)[:-1]
-        # Prüfe ob die Varible nicht Leer ist und speichere den Portnamen
-        # TODO prüfen ob man die elif auch weglassen kann.
-        elif installed_port is not None:
-            installed_ports_list[ installed_ports_idx ] = \
-                                                    installed_port.group(1)[:-1]
-        else:
-            installed_port = \
-                    re.match( ex_name, installed_ports_list[installed_ports_idx] )
-            installed_ports_list[ installed_ports_idx ] = \
-                                                    installed_port.group(1)[:-1]
-
-        installed_port = None
+                installed_port = None
 
     return sorted(installed_ports_list)
 

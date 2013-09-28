@@ -14,8 +14,8 @@ lang_pattern = [ 'apr', 'cyrus-sasl', 'c-ares', 'gd', 'hdf', 'jack',
 'openldap', 'perl-threaded', 'py27', 'ruby', 'sdl', 'swig', 'tk-8.5', 'wxgtk2']
 ports_db_path = '/var/db/ports'
 portdir = '/usr/ports'
-ex_name = r'(^\w.+-)'
-ex_name_version = r'(^\w.+-)(\d).\d*'
+ex_name = r'(^\w.+)\-'
+ex_name_version = r'(^\w.+)-(\d).\d*'
 ex_tilt_dir_prefix = r'^\w.+_(\w.*)$'
 
 def errPrint( errorcode = os.EX_SOFTWARE, msg = None ):
@@ -97,11 +97,11 @@ def wiki_pkg_list(configured_ports, installed_ports):
                         key = port_name_version.group(0)
                     else:
                         # Wir haben ein Paar ohne Version
-                        key = re.match( ex_name, port).group(1)[:-1]
-            install_config_ports.update({key: value})
-            avail_configed_ports.update(
-                    { configured_ports[ config_index ]: [ key, value ] })
-    # }}}
+                        key = re.match( ex_name, port ).group(1)
+            install_config_ports.update( { key: value } )
+            avail_configed_ports.update( \
+                { configured_ports[ config_index ]: [ key, value ] } )
+    # TODO ende }}}
 
     # Wenn die Datei 'pkg_list.wiki' bereits existiert, dann löschen.
     if os.path.exists( 'pkg_list.wiki' ):
@@ -227,7 +227,7 @@ def get_installed_ports():
                 # Falls es kein 'saved_port' gibt speichern ohne versionsnummer
                 else:
                     installed_ports_list[ installed_ports_idx ] = \
-                                                    installed_port.group(1)[:-1]
+                        installed_port.group(1)
                 installed_port = None
 
     return sorted(installed_ports_list)
@@ -247,3 +247,5 @@ if __name__ == "__main__":
         errPrint()
 
     sys.exit( os.EX_OK )
+
+# vim: set tw=79 ts=4 sw=4 et: #

@@ -49,46 +49,24 @@ def percent_match ( pattern_list, string ):
                 relation = current_relation
     return relation
 
+# Informationen Paaren zwischen Portbezeichnung und Packetname
+# Durch den Index der Liste 'config_ports_dir gehen'
 #
-# TODO genauere erklärung zur funktion
+# Prüfen ob "_OPTIONS_READ=" in der Zeile steht
+# und match auf die Portbezeichnung
 #
-# 'wiki_config_port' beschreibt die 'wikifp' aus der Liste
-# 'avail_configed_ports' erhaltenden Portnamen die Konfigurationen.
-def wiki_config_port( wikifp, avail_configed_ports ):
-
-    wikifp.write('\n=== konfigurierte Ports ===\n')
-
-    for port in avail_configed_ports.keys():
-        optionsfp = open( os.path.join( ports_db_path, port, 'options'), 'r')
-        optionsfp_list = optionsfp.readlines()[ 4: ]
-        wikifp.writelines( [ '\n==== %s ====\n\n' \
-            %avail_configed_ports[ port ], ' <code>\n'] )
-        for option in optionsfp_list:
-            wikifp.write( ' ' + option )
-        wikifp.write(' </code>\n\n')
-
-#
-# TODO genauere erklärung zur funktion
-#
-def wiki_pkg_list( configured_ports, installed_ports ):
+# Wenn erfolgreich (nicht 'None') wird Portname und Version
+# gespeichert ansonsten nur der Portname
+def ports_named_pairing( config_ports_dir ):
     install_config_ports = {}
     avail_configed_ports = {}
 
-    # TODO eigene Funktion da draus machen {{{
-    # Informationen Paaren zwischen Portbezeichnung und Packetname
-    # Durch den Index der Liste 'configured_ports gehen'
-    #
-    # Prüfen ob "_OPTIONS_READ=" in der Zeile steht
-    # und match auf die Portbezeichnung
-    #
-    # Wenn erfolgreich (nicht 'None') wird Portname und Version
-    # gespeichert ansonsten nur der Portname
-    for config_index in range( len( configured_ports ) ):
+    for config_index in range( len( config_ports_dir ) ):
         value = re.match( ex_tilt_dir_prefix, \
-            configured_ports[ config_index ] ).group(1)
+            config_ports_dir[ config_index ] ).group(1)
 
         option_path = os.path.join( ports_db_path, \
-            configured_ports[ config_index ], 'options')
+            config_ports_dir[ config_index ], 'options')
 
         if os.path.exists( option_path ):
             port_optionfp = open( option_path )
@@ -108,8 +86,15 @@ def wiki_pkg_list( configured_ports, installed_ports ):
 
             install_config_ports.update( { key: value } )
             avail_configed_ports.update( \
-                { configured_ports[ config_index ]: [ key, value ] } )
-    # TODO ende }}}
+                { config_ports_dir[ config_index ]: [ key, value ] } )
+    return install_config_ports, avail_configed_ports
+
+#
+# TODO genauere erklärung zur funktion
+#
+def wiki_pkg_list( configured_ports, installed_ports ):
+    install_config_ports, avail_configed_ports = \
+        ports_named_pairing( configured_ports )
 
     if os.path.exists('pkg_list.wiki'):
         os.remove('pkg_list.wiki')
@@ -128,6 +113,9 @@ def wiki_pkg_list( configured_ports, installed_ports ):
     # Wenn das Port mit zur Basisinstalation gehört, schreibe
     # davor den Artikel 'Server/Jails' ansonsten übergebe 'available_port'
     # an die Liste der noch zu ergänzenden Portkonfigurationen
+    #
+    # 'wiki_config_port' beschreibt die 'wikifp' aus der Liste
+    # 'avail_configed_ports' erhaltenden Portnamen die Konfigurationen.
     for available_port in installed_ports:
         if available_port in install_config_ports.keys():
             wikifp.write('* [[')
@@ -153,7 +141,16 @@ def wiki_pkg_list( configured_ports, installed_ports ):
         else:
             wikifp.write('* %s\n' %available_port )
 
-    wiki_config_port( wikifp, avail_configed_ports )
+    wikifp.write('\n=== konfigurierte Ports ===\n')
+
+    for port in avail_configed_ports.keys():
+        optionsfp = open( os.path.join( ports_db_path, port, 'options'), 'r')
+        optionsfp_list = optionsfp.readlines()[ 4: ]
+        wikifp.writelines( [ '\n==== %s ====\n\n' \
+            %avail_configed_ports[ port ], ' <code>\n'] )
+        for option in optionsfp_list:
+            wikifp.write( ' ' + option )
+        wikifp.write(' </code>\n\n')
     wikifp.close()
 
 # get_configured_ports gibt eine sortierte Liste aller bisher
@@ -212,7 +209,7 @@ def get_installed_ports():
             continue
 
         installed_port = re.match( ex_name_version, \
-                                installed_ports_list[ installed_ports_idx ] )
+            installed_ports_list[ installed_ports_idx ] )
 
         if installed_ports_idx != ( len( installed_ports_list ) - 1 ):
             next_installed_port = re.match( ex_name_version, \

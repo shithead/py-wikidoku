@@ -8,6 +8,10 @@ import subprocess
 
 # TODO is the functionaly of basic_ports test existenz
 basic_ports = [] #['help2man', 'libiconv', 'm4', 'pcre', 'perl-threaded', 'portupgrade', 'ruby', 'zsh']
+# 'lang_pattern' is a work around for matches with obsolate version-tag in port
+# parsing (e.g. perl-threaded)
+lang_pattern = [ 'apr', 'cyrus-sasl', 'c-ares', 'gd', 'hdf', 'jack',
+'openldap', 'perl-threaded', 'py27', 'ruby', 'sdl', 'swig', 'tk-8.5', 'wxgtk2']
 ports_db_path = '/var/db/ports'
 portdir = '/usr/ports'
 ex_name = r'(^\w.+-)'
@@ -32,6 +36,18 @@ def systemCheck():
 # XXX headline more fancy idea
 # def headder(inum):
 #     return "="*inum
+
+# Die Funktion 'percent_match' git das Verhältnis von 0.0..1.0 von
+# gemachtchten Strings.
+def percent_match ( pattern_list, string ):
+    relation = 0.0
+    for pattern in pattern_list:
+        match = re.search( pattern, string )
+        if match  != None:
+            current_relation = len( pattern ) / len( string )
+            if current_relation > relation:
+                relation = current_relation
+    return relation
 
 # 'wiki_config_port' beschreibt die 'wikifp' aus der Liste
 # 'avail_configed_ports' erhaltenden Portnamen die Konfigurationen.
@@ -75,7 +91,8 @@ def wiki_pkg_list(configured_ports, installed_ports):
                     port_name_version = re.match( ex_name_version, port)
                     # Wenn erfolgreich (nicht 'None') wird Portname und Version
                     # gespeichert ansonsten nur der Portname
-                    if port_name_version != None:
+                    if port_name_version != None and not \
+                        percent_match( lang_pattern, port_name_version.group(0) ):
                         # Wir haben ein Paar mit Version
                         key = port_name_version.group(0)
                     else:

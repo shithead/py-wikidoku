@@ -92,9 +92,9 @@ def ports_named_pairing( config_ports_dir ):
 #
 # TODO genauere erklärung zur funktion
 #
-def wiki_pkg_list( configured_ports, installed_ports ):
-    install_config_ports, avail_configed_ports = \
-        ports_named_pairing( configured_ports )
+def wiki_pkg_list( install_config_ports, \
+        avail_configed_ports, \
+        installed_ports ):
 
     if os.path.exists('pkg_list.wiki'):
         os.remove('pkg_list.wiki')
@@ -162,7 +162,7 @@ def wiki_pkg_list( configured_ports, installed_ports ):
 # vorhanden sein lösche Ports in der Liste
 #
 # FIXME Es wird nicht überprüft ob das Port noch installiert ist
-def get_configured_ports():
+def get_configed_ports_dir():
     no_options = []
     configed_ports_dirs = os.listdir( ports_db_path )
     for configed_ports_idx in range( len( configed_ports_dirs ) ):
@@ -248,9 +248,11 @@ def get_installed_ports():
 
 def main( ports_db_path ):
     systemCheck()
-    configed_ports = get_configured_ports()
+    configed_ports_dir = get_configed_ports_dir()
+    install_config_ports, avail_configed_ports = \
+        ports_named_pairing( configed_ports_dir )
     installed_ports = get_installed_ports()
-    wiki_pkg_list( configed_ports, installed_ports )
+    wiki_pkg_list( install_config_ports, avail_configed_ports, installed_ports )
 
 if __name__ == '__main__':
     try:

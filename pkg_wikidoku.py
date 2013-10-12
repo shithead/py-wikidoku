@@ -176,26 +176,35 @@ def get_configed_ports_dir():
 
     return sorted( configed_ports_dirs )
 
-#
-# TODO genauere erklärung zur funktion
-#
 # Suche per regex den Portnamen, Verdion und Subversion
 #
-# Prüfen auf letzten _idx um die regex zu ignorieren
-# und die Variable auf 'None' zusetzen
+# in Schleife:
+#   Setze neuen installed_port
 #
-# Prüfe ob die Variablen ´gefüllt´ sind.
+#   Prüfen auf letzten _idx
+#       Wenn nicht:
+#           setze next_installed_port
+#       ansonsten:
+#           next_installed_port auf None setzen
 #
-# Teste ob der Portname identisch ist und speichere Portname
-# und Versionen speichere letzten identischen Portnamen und
-# resete die Variablen
+#   Prüfen ob next-/installed_port vorhanden
+#       Prüfe ob gleicher Name
+#           Wenn gleich:
+#               speichere Portname
+#               schreibe die Ports (mit Version) in die Liste
+#               setze cnext auf true um naechsten port zu ueberspringen
+#               loesche next_/installed_port
 #
-# Falls 'installed_port' nicht 'None' ist (kein Match im letzten
-# 'If' / kein 'next_installed_port')
-# Überprüfe ob es mit dem gespeicherten Portnamen matched
-# falls nicht, resete 'saved_port' und speichern ohne Versionsnummer
+#   Wenn installed_port vorhanden: (letztes Element, Namen haben nicht
+#   gematched)
+#       Wenn saved_port vorhanden:
+#           Bei gleichen Namen schreibe Ports (mit Version)
+#           ansonsten loeche saved_port, schreibe Port (ohne Version)
 #
-# Falls es kein 'saved_port' gibt speichern ohne versionsnummer
+#       Kein saved_port:
+#           schriebe Port (ohne Version)
+#
+#       loesche installed port
 def get_installed_ports():
     installed_ports = str( subprocess.check_output( \
         ['pkg_info', '-a', '-E'] ), 'UTF-8')
@@ -216,8 +225,6 @@ def get_installed_ports():
                 installed_ports_list[ installed_ports_idx + 1 ] )
         else:
             next_installed_port = None
-            installed_ports_list[ installed_ports_idx ] = \
-                installed_port.group(1)
 
         if next_installed_port is not None and installed_port is not None:
             if  installed_port.group(1) == next_installed_port.group(1):

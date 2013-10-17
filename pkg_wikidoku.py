@@ -37,8 +37,8 @@ def systemCheck():
 # def headder(inum):
 #     return "="*inum
 
-# Die Funktion 'percent_match' git das Verhältnis von 0.0..1.0 von
-# gemachtchten Strings.
+# Die Funktion 'percent_match' gibt das Verhältnis von 0.0..1.0
+# der gefundenden Strings.
 def percent_match ( pattern_list, string ):
     relation = 0.0
     for pattern in pattern_list:
@@ -179,10 +179,10 @@ def get_configed_ports_dir():
 #
 # TODO genauere erklärung zur funktion
 #
-# Suche per regex den Portnamen, Verdion und Subversion
+# Suche per regex den Portnamen, Version und Subversion
 #
-# Prüfen auf letzten _idx um die regex zu ignorieren
-# und die Variable auf 'None' zusetzen
+# Prüfen auf letzten '_idx' um die regex zu ignorieren
+# und die Variable auf 'None' zu setzen
 #
 # Prüfe ob die Variablen ´gefüllt´ sind.
 #

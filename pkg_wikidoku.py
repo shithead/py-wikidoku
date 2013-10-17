@@ -12,7 +12,7 @@ basic_ports = [] #['help2man', 'libiconv', 'm4', 'pcre', 'perl-threaded', 'portu
 # parsing (e.g. perl-threaded)
 lang_pattern = [ 'apr', 'cyrus-sasl', 'c-ares', 'gd', 'hdf', 'jack',
 'openldap', 'perl-threaded', 'py27', 'ruby', 'sdl', 'swig', 'tk-8.5', 'wxgtk2']
-ports_db_path = '/var/db/ports'
+ports_db_prefix = '/var/db/ports'
 portdir = '/usr/ports'
 ex_name = r'(^\w.+)\-'
 ex_name_version = r'(^\w.+)-(\d).\d*'
@@ -52,8 +52,7 @@ def percent_match ( pattern_list, string ):
 # Informationen Paaren zwischen Portbezeichnung und Packetname
 # Durch den Index der Liste 'config_ports_dir gehen'
 #
-# Prüfen ob "_OPTIONS_READ=" in der Zeile steht
-# und match auf die Portbezeichnung
+# Suche "_OPTIONS_READ=" und parse die Portbezeichnung
 #
 # Wenn erfolgreich (nicht 'None') wird Portname und Version
 # gespeichert ansonsten nur der Portname
@@ -65,7 +64,7 @@ def ports_named_pairing( config_ports_dir ):
         value = re.match( ex_tilt_dir_prefix, \
             config_ports_dir[ config_index ] ).group(1)
 
-        option_path = os.path.join( ports_db_path, \
+        option_path = os.path.join( ports_db_prefix, \
             config_ports_dir[ config_index ], 'options')
 
         if os.path.exists( option_path ):
@@ -77,9 +76,10 @@ def ports_named_pairing( config_ports_dir ):
 
                     port_name_version = re.match( ex_name_version, port )
 
-                    if port_name_version != None and not \
-                        percent_match( lang_pattern, \
-                                port_name_version.group(0) ):
+                    if port_name_version is not None and \
+                        not percent_match( lang_pattern, \
+                        port_name_version.group(0) ):
+
                         key = port_name_version.group(0)
                     else:
                         key = re.match( ex_name, port ).group(1)
@@ -90,7 +90,7 @@ def ports_named_pairing( config_ports_dir ):
     return install_config_ports, avail_configed_ports
 
 #
-# TODO genauere erklärung zur funktion
+# TODO genauere Erklärung zur Funktion
 #
 def wiki_pkg_list( install_config_ports, \
         avail_configed_ports, \
@@ -144,7 +144,7 @@ def wiki_pkg_list( install_config_ports, \
     wikifp.write('\n=== konfigurierte Ports ===\n')
 
     for port in avail_configed_ports.keys():
-        optionsfp = open( os.path.join( ports_db_path, port, 'options'), 'r')
+        optionsfp = open( os.path.join( ports_db_prefix, port, 'options'), 'r')
         optionsfp_list = optionsfp.readlines()[ 4: ]
         wikifp.writelines( [ '\n==== %s ====\n\n' \
             %avail_configed_ports[ port ], ' <code>\n'] )
@@ -164,9 +164,9 @@ def wiki_pkg_list( install_config_ports, \
 # FIXME Es wird nicht überprüft ob das Port noch installiert ist
 def get_configed_ports_dir():
     no_options = []
-    configed_ports_dirs = os.listdir( ports_db_path )
+    configed_ports_dirs = os.listdir( ports_db_prefix )
     for configed_ports_idx in range( len( configed_ports_dirs ) ):
-        option_path = os.path.join( ports_db_path, \
+        option_path = os.path.join( ports_db_prefix, \
             configed_ports_dirs[ configed_ports_idx ], 'options')
         if not os.path.exists( option_path ):
             no_options.append( configed_ports_idx )
@@ -246,7 +246,7 @@ def get_installed_ports():
 
     return sorted( installed_ports_list )
 
-def main( ports_db_path ):
+def main( ports_db_prefix ):
     systemCheck()
     configed_ports_dir = get_configed_ports_dir()
     install_config_ports, avail_configed_ports = \
@@ -256,7 +256,7 @@ def main( ports_db_path ):
 
 if __name__ == '__main__':
     try:
-        main( ports_db_path )
+        main( ports_db_prefix )
     except SystemExit:
         sys.stderr.write('\tSystemExit: %s' %sys.exc_info()[1] )
     except:

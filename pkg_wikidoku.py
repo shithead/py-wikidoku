@@ -43,7 +43,7 @@ def percent_match ( pattern_list, string ):
     relation = 0.0
     for pattern in pattern_list:
         match = re.search( pattern, string )
-        if match != None:
+        if match is not None:
             current_relation = len( pattern ) / len( string )
             if current_relation > relation:
                 relation = current_relation
@@ -219,9 +219,10 @@ def get_installed_ports():
             installed_ports_list[ installed_ports_idx ] = \
                 installed_port.group(1)
 
-        if next_installed_port is not None and installed_port is not None:
-            if  installed_port.group(1) == next_installed_port.group(1):
-                saved_port = installed_port
+        if installed_port is not None:
+            if next_installed_port is not None:
+                if  installed_port.group(1) == next_installed_port.group(1):
+                    saved_port = installed_port
                 installed_ports_list[ installed_ports_idx ] = \
                     installed_port.group(0)
                 installed_ports_list[ installed_ports_idx + 1 ] = \
@@ -230,19 +231,18 @@ def get_installed_ports():
                 installed_port = None
                 next_installed_port = None
 
-        if installed_port:
-                if saved_port:
-                    if installed_port.group(1) == saved_port.group(1):
-                        installed_ports_list[ installed_ports_idx ] = \
-                            installed_port.group(0)
-                    else:
-                        saved_port = None
-                        installed_ports_list[ installed_ports_idx ] = \
-                            installed_port.group(1)
-                else:
+            if saved_port is not None:
+                if installed_port.group(1) == saved_port.group(1):
                     installed_ports_list[ installed_ports_idx ] = \
+                            installed_port.group(0)
+                else:
+                    saved_port = None
+                    installed_ports_list[ installed_ports_idx ] = \
+                            installed_port.group(1)
+            else:
+                installed_ports_list[ installed_ports_idx ] = \
                         installed_port.group(1)
-                installed_port = None
+            installed_port = None
 
     return sorted( installed_ports_list )
 

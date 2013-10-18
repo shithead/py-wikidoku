@@ -40,6 +40,7 @@ def systemCheck():
 # Die Funktion 'percent_match' gibt das Verhältnis von 0.0..1.0
 # der gefundenden Strings.
 def percent_match ( pattern_list, string ):
+
     relation = 0.0
     for pattern in pattern_list:
         match = re.search( pattern, string )
@@ -47,6 +48,7 @@ def percent_match ( pattern_list, string ):
             current_relation = len( pattern ) / len( string )
             if current_relation > relation:
                 relation = current_relation
+
     return relation
 
 # Informationen Paaren zwischen Portbezeichnung und Packetname
@@ -57,6 +59,7 @@ def percent_match ( pattern_list, string ):
 # Wenn erfolgreich (nicht 'None') wird Portname und Version
 # gespeichert ansonsten nur der Portname
 def ports_named_pairing( config_ports_dir ):
+
     install_config_ports = {}
     avail_configed_ports = {}
 
@@ -78,7 +81,7 @@ def ports_named_pairing( config_ports_dir ):
 
                     if port_name_version is not None and \
                         not percent_match( lang_pattern, \
-                        port_name_version.group(0) ):
+                                           port_name_version.group(0) ):
 
                         key = port_name_version.group(0)
                     else:
@@ -87,6 +90,7 @@ def ports_named_pairing( config_ports_dir ):
             install_config_ports.update( { key: value } )
             avail_configed_ports.update( \
                 { config_ports_dir[ config_index ]: [ key, value ] } )
+
     return install_config_ports, avail_configed_ports
 
 #
@@ -208,19 +212,19 @@ def get_installed_ports():
             cnext = False
             continue
 
-        installed_port = re.match( ex_name_version, \
+        installed_port_name_version = re.match( ex_name_version, \
             installed_ports_list[ installed_ports_idx ] )
 
         if installed_ports_idx != ( len( installed_ports_list ) - 1 ):
-            next_installed_port = re.match( ex_name_version, \
+            next_installed_port_name_version = re.match( ex_name_version, \
                 installed_ports_list[ installed_ports_idx + 1 ] )
         else:
-            next_installed_port = None
+            next_installed_port_name_version = None
             installed_ports_list[ installed_ports_idx ] = \
                 installed_port.group(1)
 
-        if installed_port is not None:
-            if next_installed_port is not None:
+        if installed_port_name_version is not None:
+            if next_installed_port_name_version is not None:
                 if  installed_port.group(1) == next_installed_port.group(1):
                     saved_port = installed_port
                 installed_ports_list[ installed_ports_idx ] = \
@@ -228,21 +232,21 @@ def get_installed_ports():
                 installed_ports_list[ installed_ports_idx + 1 ] = \
                     next_installed_port.group(0)
                 cnext = True
-                installed_port = None
-                next_installed_port = None
+                installed_port_name_version = None
+                next_installed_port_name_version = None
 
             if saved_port is not None:
-                if installed_port.group(1) == saved_port.group(1):
+                if installed_port_name_version.group(1) == saved_port.group(1):
                     installed_ports_list[ installed_ports_idx ] = \
-                            installed_port.group(0)
+                            installed_port_name_version.group(0)
                 else:
                     saved_port = None
                     installed_ports_list[ installed_ports_idx ] = \
-                            installed_port.group(1)
+                            installed_port_name_version.group(1)
             else:
                 installed_ports_list[ installed_ports_idx ] = \
-                        installed_port.group(1)
-            installed_port = None
+                        installed_port_name_version.group(1)
+            installed_port_name_version = None
 
     return sorted( installed_ports_list )
 

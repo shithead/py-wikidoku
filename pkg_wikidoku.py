@@ -65,23 +65,24 @@ def ports_named_pairing( config_ports_dir ):
 
     for config_index in range( len( config_ports_dir ) ):
         value = re.match( ex_tilt_dir_prefix, \
-            config_ports_dir[ config_index ] ).group(1)
+                          config_ports_dir[ config_index ] ).group(1)
 
         option_path = os.path.join( ports_db_prefix, \
-            config_ports_dir[ config_index ], 'options')
+                                    config_ports_dir[ config_index ], \
+                                    'options')
 
         if os.path.exists( option_path ):
             port_optionfp = open( option_path )
             for port_option in port_optionfp.readlines():
                 if '_OPTIONS_READ=' in port_option:
                     port = re.match(r'_OPTIONS_READ=(.*)', \
-                        port_option ).group(1)
+                                    port_option ).group(1)
 
                     port_name_version = re.match( ex_name_version, port )
 
                     if port_name_version is not None and \
-                        not percent_match( lang_pattern, \
-                                           port_name_version.group(0) ):
+                        not percent_match(  lang_pattern, \
+                                            port_name_version.group(0) ):
 
                         key = port_name_version.group(0)
                     else:
@@ -96,9 +97,9 @@ def ports_named_pairing( config_ports_dir ):
 #
 # TODO genauere Erklärung zur Funktion
 #
-def wiki_pkg_list( install_config_ports, \
-        avail_configed_ports, \
-        installed_ports ):
+def wiki_pkg_list(  install_config_ports, \
+                    avail_configed_ports, \
+                    installed_ports ):
 
     if os.path.exists('pkg_list.wiki'):
         os.remove('pkg_list.wiki')

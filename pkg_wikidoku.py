@@ -196,7 +196,7 @@ def get_configed_ports_dir():
 # resete die Variablen
 #
 # Falls 'installed_port' nicht 'None' ist (kein Match im letzten
-# 'If' / kein 'next_installed_port')
+# 'If' / kein 'next_installed_port_name_version')
 # Überprüfe ob es mit dem gespeicherten Portnamen matched
 # falls nicht, resete 'saved_port' und speichern ohne Versionsnummer
 #
@@ -222,16 +222,17 @@ def get_installed_ports():
         else:
             next_installed_port_name_version = None
             installed_ports_list[ installed_ports_idx ] = \
-                installed_port.group(1)
+                installed_port_name_version.group(1)
 
         if installed_port_name_version is not None:
             if next_installed_port_name_version is not None:
-                if  installed_port.group(1) == next_installed_port.group(1):
-                    saved_port = installed_port
+                if installed_port_name_version.group(1) == next_installed_port_name_version.group(1):
+                    saved_port = installed_port_name_version
+
                 installed_ports_list[ installed_ports_idx ] = \
-                    installed_port.group(0)
+                    installed_port_name_version.group(0)
                 installed_ports_list[ installed_ports_idx + 1 ] = \
-                    next_installed_port.group(0)
+                    next_installed_port_name_version.group(0)
                 cnext = True
                 installed_port_name_version = None
                 next_installed_port_name_version = None

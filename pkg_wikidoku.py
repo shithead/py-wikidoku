@@ -14,6 +14,8 @@ lang_pattern = [ 'apr', 'cyrus-sasl', 'c-ares', 'gd', 'hdf', 'jack',
 'openldap', 'perl-threaded', 'py27', 'ruby', 'sdl', 'swig', 'tk-8.5', 'wxgtk2']
 ports_db_prefix = '/var/db/ports'
 portdir = '/usr/ports'
+
+# regularexpression
 ex_name = r'(^\w.+)\-'
 ex_name_version = r'(^\w.+)-(\d).\d*'
 ex_tilt_dir_prefix = r'^\w.+_(\w.*)$'
@@ -112,10 +114,6 @@ def wiki_pkg_list(  install_config_ports, \
     # das Port nur auf.
     #
     # Wenn das Port mit zur Basisinstalation gehört, schreibe
-    # davor den wiki-Artikel 'Server/Jails' ansonsten übergebe 'available_port'
-    # an die Liste der noch zu ergänzenden Portkonfigurationen
-    #
-    # Wenn das Port mit zur Basisinstalation gehört, schreibe
     # davor den Artikel 'Server/Jails' ansonsten übergebe 'available_port'
     # an die Liste der noch zu ergänzenden Portkonfigurationen
     #
@@ -208,7 +206,7 @@ def get_installed_ports():
     cnext = False
     saved_port = None
 
-    for installed_ports_idx in range( 0, len( installed_ports_list ) ):
+    for installed_ports_idx in range( len( installed_ports_list ) ):
         if cnext:
             cnext = False
             continue
@@ -236,6 +234,7 @@ def get_installed_ports():
                 cnext = True
                 installed_port_name_version = None
                 next_installed_port_name_version = None
+                continue
 
             if saved_port is not None:
                 if installed_port_name_version.group(1) == saved_port.group(1):

@@ -227,14 +227,14 @@ def get_installed_ports():
                 if installed_port_name_version.group(1) == next_installed_port_name_version.group(1):
                     saved_port = installed_port_name_version
 
-                installed_ports_list[ installed_ports_idx ] = \
-                    installed_port_name_version.group(0)
-                installed_ports_list[ installed_ports_idx + 1 ] = \
-                    next_installed_port_name_version.group(0)
-                cnext = True
-                installed_port_name_version = None
-                next_installed_port_name_version = None
-                continue
+                    installed_ports_list[ installed_ports_idx ] = \
+                        installed_port_name_version.group(0)
+                    installed_ports_list[ installed_ports_idx + 1 ] = \
+                        next_installed_port_name_version.group(0)
+                    cnext = True
+                    installed_port_name_version = None
+                    next_installed_port_name_version = None
+                    continue
 
             if saved_port is not None:
                 if installed_port_name_version.group(1) == saved_port.group(1):

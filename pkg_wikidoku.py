@@ -8,10 +8,6 @@ import subprocess
 
 # TODO is the functionaly of basic_ports test existenz
 basic_ports = [] #['help2man', 'libiconv', 'm4', 'pcre', 'perl-threaded', 'portupgrade', 'ruby', 'zsh']
-# 'lang_pattern' is a work around for matches with obsolate version-tag in port
-# parsing (e.g. perl-threaded)
-lang_pattern = [ 'apr', 'cyrus-sasl', 'c-ares', 'gd', 'hdf', 'jack',
-'openldap', 'perl-threaded', 'py27', 'ruby', 'sdl', 'swig', 'tk-8.5', 'wxgtk2']
 ports_db_prefix = '/var/db/ports'
 portdir = '/usr/ports'
 
@@ -35,72 +31,11 @@ def systemCheck():
         print('Your OS is LAME!!!')
         sys.exit( os.EX_OSERR )
 
-# XXX headline more fancy idea
-# def headder(inum):
-#     return "="*inum
-
-# Die Funktion 'percent_match' gibt das Verhältnis von 0.0..1.0
-# der gefundenden Strings.
-def percent_match ( pattern_list, string ):
-
-    relation = 0.0
-    for pattern in pattern_list:
-        match = re.search( pattern, string )
-        if match is not None:
-            current_relation = len( pattern ) / len( string )
-            if current_relation > relation:
-                relation = current_relation
-
-    return relation
-
-# Informationen Paaren zwischen Portbezeichnung und Packetname
-# Durch den Index der Liste 'config_ports_dir gehen'
-#
-# Suche "_OPTIONS_READ=" und parse die Portbezeichnung
-#
-# Wenn erfolgreich (nicht 'None') wird Portname und Version
-# gespeichert ansonsten nur der Portname
-def ports_named_pairing( config_ports_dir ):
-
-    install_config_ports = {}
-    avail_configed_ports = {}
-
-    for config_index in range( len( config_ports_dir ) ):
-        value = re.match( ex_tilt_dir_prefix, \
-                          config_ports_dir[ config_index ] ).group(1)
-
-        option_path = os.path.join( ports_db_prefix, \
-                                    config_ports_dir[ config_index ], \
-                                    'options')
-
-        if os.path.exists( option_path ):
-            port_optionfp = open( option_path )
-            for port_option in port_optionfp.readlines():
-                if '_OPTIONS_READ=' in port_option:
-                    port = re.match(r'_OPTIONS_READ=(.*)', \
-                                    port_option ).group(1)
-
-                    port_name_version = re.match( ex_name_version, port )
-
-                    if port_name_version is not None and \
-                        not percent_match(  lang_pattern, \
-                                            port_name_version.group(0) ):
-
-                        key = port_name_version.group(0)
-                    else:
-                        key = re.match( ex_name, port ).group(1)
-
-            install_config_ports.update( { key: value } )
-            avail_configed_ports.update( \
-                { config_ports_dir[ config_index ]: [ key, value ] } )
-
-    return install_config_ports, avail_configed_ports
 
 #
 # TODO genauere Erklärung zur Funktion
 #
-def wiki_pkg_list(  install_config_ports, \
-                    avail_configed_ports, \
+def wiki_pkg_list(  ports_relation, \
                     installed_ports ):
 
     if os.path.exists('pkg_list.wiki'):
@@ -114,57 +49,121 @@ def wiki_pkg_list(  install_config_ports, \
     # das Port nur auf.
     #
     # Wenn das Port mit zur Basisinstalation gehört, schreibe
-    # davor den Artikel 'Server/Jails' ansonsten übergebe 'available_port'
-    # an die Liste der noch zu ergänzenden Portkonfigurationen
-    #
-    # 'wiki_config_port' beschreibt die 'wikifp' aus der Liste
-    # 'avail_configed_ports' erhaltenden Portnamen die Konfigurationen.
+    # davor den Artikel 'Server/Jails' ansonsten übergebe an
+    # 'port_option_filepart' die Portoptionen
+    relation_values = []
+    port_option_filepart = ['\n=== konfigurierte Ports ===\n']
     for available_port in installed_ports:
-        if available_port in install_config_ports.keys():
+        if available_port in ports_relation.keys():
+            relation_values = ports_relation[ available_port ]
+            port_option_dir = relation_values[0]
+            pkg_name = relation_values[1]
+
             wikifp.write('* [[')
-            if available_port in basic_ports:
+            if pkg_name in basic_ports:
                 wikifp.write('Server/Jails')
 
-            wikifp.write( '#{0} | {1}]]\n'.format( \
-                install_config_ports[ available_port ], available_port ) )
+            wikifp.write( '#{0} | {1}]]\n'.format( pkg_name, available_port ) )
 
-            for dir_key in avail_configed_ports.keys():
-                if available_port in avail_configed_ports[ dir_key ]:
-                    avail_configed_ports.update( \
-                        { dir_key: install_config_ports[ available_port ] } )
-        elif available_port in install_config_ports.values():
-            wikifp.write('* [[')
-            if available_port in basic_ports:
-                wikifp.write('Server/Jails')
-            wikifp.write( '#{0} | {0}]]\n'.format( available_port ) )
+            optionsfp = open( os.path.join( ports_db_prefix, port_option_dir, \
+                                            'options'), 'r')
+            optionsfp_list = optionsfp.readlines()[ 4: ]
+            port_option_filepart.append('\n==== %s ====\n\n' %pkg_name)
+            port_option_filepart.append(' <code>\n' )
 
-            for dir_key in avail_configed_ports.keys():
-                if available_port in avail_configed_ports[ dir_key ]:
-                    avail_configed_ports.update( { dir_key: available_port } )
+            for option in optionsfp_list:
+                port_option_filepart.append( ' ' + option )
+            port_option_filepart.append(' </code>\n\n')
+
         else:
             wikifp.write('* %s\n' %available_port )
 
-    wikifp.write('\n=== konfigurierte Ports ===\n')
-
-    for port in avail_configed_ports.keys():
-        optionsfp = open( os.path.join( ports_db_prefix, port, 'options'), 'r')
-        optionsfp_list = optionsfp.readlines()[ 4: ]
-        wikifp.writelines( [ '\n==== %s ====\n\n' \
-            %avail_configed_ports[ port ], ' <code>\n'] )
-        for option in optionsfp_list:
-            wikifp.write( ' ' + option )
-        wikifp.write(' </code>\n\n')
+    wikifp.writelines(port_option_filepart)
     wikifp.close()
 
-# get_configured_ports gibt eine sortierte Liste aller bisher
+# Die Funktion 'get_best_relation' gibt das Verhältnis von 0.0..1.0
+# des besten Vergleiches zurueck.
+def get_best_relation ( pattern_list, string ):
+
+    relation = 0.0
+    for patter in pattern_list:
+        try:
+            match = re.search( patter, string )
+        except:
+            continue
+        if match is not None:
+            current_relation = len( patter ) / len( string )
+            if current_relation > relation:
+                relation = current_relation
+
+    return relation
+
+# Die Funktion 'get_best_match' gibt den besten String
+# des besten Vergleiches zurueck.
+def get_best_match ( patter, string_list ):
+    string = None
+    relation = 0.0
+    for current_string in string_list:
+        match = re.search( patter, current_string )
+        if match is not None:
+            current_relation = len( patter ) / len( current_string )
+            if current_relation > relation:
+                relation = current_relation
+                string = current_string
+    return string
+
+# Informationen Paaren zwischen Portbezeichnung und Packetname
+# Durch den Index der Liste 'config_ports_dir gehen'
+#
+# Suche "_OPTIONS_READ=" und parse die Portbezeichnung
+#
+# Suche nach Portsbezeichnung die dem portnamen am ehesten zutreffend sind.
+def ports_named_pairing( config_ports_dir, installed_ports ):
+
+    install_config_ports = {}
+
+    for config_index in range( len( config_ports_dir ) ):
+        value1 = config_ports_dir[ config_index ]
+        option_path = os.path.join( ports_db_prefix, \
+                config_ports_dir[ config_index ], 'options')
+
+        if os.path.exists( option_path ):
+            port_optionfp = open( option_path )
+            for port_option in port_optionfp.readlines():
+                if '_OPTIONS_READ=' in port_option:
+                    port_name_version = re.match(r'_OPTIONS_READ=(.*)', port_option ).group(1)
+                    break
+
+            port_name_version = re.match( ex_name_version, port_name_version )
+            print(option_path)
+            if port_name_version is not None:
+                relation_group_0 = get_best_relation( installed_ports, port_name_version.group(0) )
+                relation_group_1 = get_best_relation( installed_ports, port_name_version.group(1) )
+                if relation_group_0 > relation_group_1:
+                    key = get_best_match( port_name_version.group(0), installed_ports )
+
+                if relation_group_0 < relation_group_1:
+                    key = get_best_match( port_name_version.group(1), installed_ports )
+            else:
+                key = get_best_match( value2, installed_ports )
+            value2 = re.match( ex_tilt_dir_prefix, value1 ).group(1)
+        else:
+            continue
+
+        print("key: "+key)
+        print("value1: "+value1)
+        print("value2: "+value2)
+        install_config_ports.update( { key: [ value1, value2 ] } )
+
+    return install_config_ports
+
+# get_configed_ports_dir gibt eine sortierte Liste aller bisher
 # konfigurierten Ports zurück.
 #
 # 'no_options' contains Ports without 'options'-File
 #
 # Überprüfe, dass das Port eine 'options' Datei besitzt bei nicht
-# vorhanden sein lösche Ports in der Liste
-#
-# FIXME Es wird nicht überprüft ob das Port noch installiert ist
+# vorhanden sein lösche Portsverzeichnis in der Liste
 def get_configed_ports_dir():
     no_options = []
     configed_ports_dirs = os.listdir( ports_db_prefix )
@@ -201,7 +200,7 @@ def get_configed_ports_dir():
 # Falls es kein 'saved_port' gibt speichern ohne versionsnummer
 def get_installed_ports():
     installed_ports = str( subprocess.check_output( \
-        ['pkg_info', '-a', '-E'] ), 'UTF-8')
+        ['pkg_info', '-a', '-E'] ), 'ascii')
     installed_ports_list = sorted( installed_ports.splitlines() )
     cnext = False
     saved_port = None
@@ -253,11 +252,11 @@ def get_installed_ports():
 
 def main( ports_db_prefix ):
     systemCheck()
-    configed_ports_dir = get_configed_ports_dir()
-    install_config_ports, avail_configed_ports = \
-        ports_named_pairing( configed_ports_dir )
     installed_ports = get_installed_ports()
-    wiki_pkg_list( install_config_ports, avail_configed_ports, installed_ports )
+    configed_ports_dir = get_configed_ports_dir()
+    ports_relation = ports_named_pairing( configed_ports_dir, \
+                                                installed_ports )
+    wiki_pkg_list( ports_relation, installed_ports )
 
 if __name__ == '__main__':
     try:

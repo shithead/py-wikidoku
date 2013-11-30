@@ -145,6 +145,9 @@ def ports_named_pairing( config_ports_dir, installed_ports ):
                 value2 = re.match( re_tilt_dir_prefix, value1 ).group(1)
             else:
                 value2 = re.match( re_tilt_dir_prefix, value1 ).group(1)
+                if value2 is NULL:
+                    value2 = value1
+
                 key = get_best_match( value2, installed_ports )
         else:
             continue

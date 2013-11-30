@@ -12,9 +12,8 @@ ports_db_prefix = '/var/db/ports'
 portdir = '/usr/ports'
 
 # regularexpression
-ex_name = r'(^\w.+)\-'
-ex_name_version = r'(^\w.+)-(\d).\d*'
-ex_tilt_dir_prefix = r'^\w.+_(\w.*)$'
+re_name_version = r'(^\w.+)-(\d).\d*'
+re_tilt_dir_prefix = r'^\w.+_(\w.+)$'
 
 def errPrint( errorcode = os.EX_SOFTWARE, msg = None ):
     sys.stderr.write( '*** ERROR ***\n' )
@@ -35,8 +34,7 @@ def systemCheck():
 #
 # TODO genauere Erklärung zur Funktion
 #
-def wiki_pkg_list(  ports_relation, \
-                    installed_ports ):
+def wiki_pkg_list(  ports_relation, installed_ports ):
 
     if os.path.exists('pkg_list.wiki'):
         os.remove('pkg_list.wiki')
@@ -86,13 +84,13 @@ def wiki_pkg_list(  ports_relation, \
 def get_best_relation ( pattern_list, string ):
 
     relation = 0.0
-    for patter in pattern_list:
+    for pattern in pattern_list:
         try:
-            match = re.search( patter, string )
+            match = re.search( pattern, string )
         except:
             continue
         if match is not None:
-            current_relation = len( patter ) / len( string )
+            current_relation = len( pattern ) / len( string )
             if current_relation > relation:
                 relation = current_relation
 
@@ -100,13 +98,13 @@ def get_best_relation ( pattern_list, string ):
 
 # Die Funktion 'get_best_match' gibt den besten String
 # des besten Vergleiches zurueck.
-def get_best_match ( patter, string_list ):
+def get_best_match ( pattern, string_list ):
     string = None
     relation = 0.0
     for current_string in string_list:
-        match = re.search( patter, current_string )
+        match = re.search( pattern, current_string )
         if match is not None:
-            current_relation = len( patter ) / len( current_string )
+            current_relation = len( pattern ) / len( current_string )
             if current_relation > relation:
                 relation = current_relation
                 string = current_string
@@ -134,7 +132,7 @@ def ports_named_pairing( config_ports_dir, installed_ports ):
                     port_name_version = re.match(r'_OPTIONS_READ=(.*)', port_option ).group(1)
                     break
 
-            port_name_version = re.match( ex_name_version, port_name_version )
+            port_name_version = re.match( re_name_version, port_name_version )
             print(option_path)
             if port_name_version is not None:
                 relation_group_0 = get_best_relation( installed_ports, port_name_version.group(0) )
@@ -144,9 +142,10 @@ def ports_named_pairing( config_ports_dir, installed_ports ):
 
                 if relation_group_0 < relation_group_1:
                     key = get_best_match( port_name_version.group(1), installed_ports )
+                value2 = re.match( re_tilt_dir_prefix, value1 ).group(1)
             else:
+                value2 = re.match( re_tilt_dir_prefix, value1 ).group(1)
                 key = get_best_match( value2, installed_ports )
-            value2 = re.match( ex_tilt_dir_prefix, value1 ).group(1)
         else:
             continue
 
@@ -210,11 +209,11 @@ def get_installed_ports():
             cnext = False
             continue
 
-        installed_port_name_version = re.match( ex_name_version, \
+        installed_port_name_version = re.match( re_name_version, \
             installed_ports_list[ installed_ports_idx ] )
 
         if installed_ports_idx != ( len( installed_ports_list ) - 1 ):
-            next_installed_port_name_version = re.match( ex_name_version, \
+            next_installed_port_name_version = re.match( re_name_version, \
                 installed_ports_list[ installed_ports_idx + 1 ] )
         else:
             next_installed_port_name_version = None

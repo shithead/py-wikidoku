@@ -122,6 +122,10 @@ def ports_named_pairing( config_ports_dir, installed_ports ):
 
     for config_index in range( len( config_ports_dir ) ):
         value1 = config_ports_dir[ config_index ]
+        value2 = re.match( re_tilt_dir_prefix, value1 ).group(1)
+        if value2 is None:
+            value2 = value1
+
         option_path = os.path.join( ports_db_prefix, \
                 config_ports_dir[ config_index ], 'options')
 
@@ -142,20 +146,14 @@ def ports_named_pairing( config_ports_dir, installed_ports ):
 
                 if relation_group_0 < relation_group_1:
                     key = get_best_match( port_name_version.group(1), installed_ports )
-                value2 = re.match( re_tilt_dir_prefix, value1 ).group(1)
             else:
-                value2 = re.match( re_tilt_dir_prefix, value1 ).group(1)
-                if value2 is None:
-                    value2 = value1
-
                 key = get_best_match( value2, installed_ports )
         else:
             continue
 
-        print("key: "+key)
-        print("value1: "+value1)
-        print("value2: "+value2)
-        install_config_ports.update( { key: [ value1, value2 ] } )
+        if key is not None:
+            install_config_ports.update( { key: [ value1, value2 ] } )
+        key = None
 
     return install_config_ports
 

@@ -7,7 +7,7 @@ import traceback
 import subprocess
 
 # TODO is the functionaly of basic_ports test existenz
-basic_ports = [] #['help2man', 'libiconv', 'm4', 'pcre', 'perl-threaded', 'portupgrade', 'ruby', 'zsh']
+basic_ports = []
 ports_db_prefix = '/var/db/ports'
 portdir = '/usr/ports'
 
@@ -16,20 +16,37 @@ re_name_version = r'(^\w.+)-(\d).\d*'
 re_tilt_dir_prefix = r'^\w.+_(\w.+)$'
 
 def errPrint( errorcode = os.EX_SOFTWARE, msg = None ):
-    sys.stderr.write( '*** ERROR ***\n' )
+    sys.stderr.write('*** ERROR ***\n')
     if msg is None:
         traceback.print_exc()
     else:
-        sys.stderr.write( '\t%s\n' %msg )
+        sys.stderr.write('\t%s\n' %msg )
         sys.exit( errorcode )
 
 def systemCheck():
     if sys.platform.startswith('freebsd'):
-        print('Your OS is EVIL!!!')
-    else:
-        print('Your OS is LAME!!!')
+        print('Your OS is a daemon!!!')
+    elif sys.platform.startswith('linux'):
+        print('Your OS is a pinguin!!!')
         sys.exit( os.EX_OSERR )
-
+    elif sys.platform.startswith('win32'):
+        print('Your OS is a window!!!')
+        sys.exit( os.EX_OSERR )
+    elif sys.platform.startswith('cygwin'):
+        print('Your OS is a cygwindow!!!')
+        sys.exit( os.EX_OSERR )
+    elif sys.platform.startswith('darwin'):
+        print('Your OS is an apple OSX!!!')
+        sys.exit( os.EX_OSERR )
+    elif sys.platform.startswith('os2'):
+        print('Your OS is an apple OS2!!!')
+        sys.exit( os.EX_OSERR )
+    elif sys.platform.startswith('os2emx'):
+        print('Your OS is an apple OS2 EMX!!!')
+        sys.exit( os.EX_OSERR )
+    else:
+        print('Your OS is undefined!!!')
+        sys.exit( os.EX_OSERR )
 
 #
 # TODO genauere Erklärung zur Funktion
@@ -61,16 +78,16 @@ def wiki_pkg_list(  ports_relation, installed_ports ):
             if pkg_name in basic_ports:
                 wikifp.write('Server/Jails')
 
-            wikifp.write( '#{0} | {1}]]\n'.format( pkg_name, available_port ) )
+            wikifp.write('#{0} | {1}]]\n'.format( pkg_name, available_port ) )
 
             optionsfp = open( os.path.join( ports_db_prefix, port_option_dir, \
                                             'options'), 'r')
             optionsfp_list = optionsfp.readlines()[ 4: ]
             port_option_filepart.append('\n==== %s ====\n\n' %pkg_name)
-            port_option_filepart.append(' <code>\n' )
+            port_option_filepart.append(' <code>\n')
 
             for option in optionsfp_list:
-                port_option_filepart.append( ' ' + option )
+                port_option_filepart.append(' ' + option )
             port_option_filepart.append(' </code>\n\n')
 
         else:
@@ -81,7 +98,7 @@ def wiki_pkg_list(  ports_relation, installed_ports ):
 
 # Die Funktion 'get_best_relation' gibt das Verhältnis von 0.0..1.0
 # des besten Vergleiches zurueck.
-def get_best_relation ( pattern_list, string ):
+def get_best_relation( pattern_list, string ):
 
     relation = 0.0
     for pattern in pattern_list:
@@ -98,7 +115,7 @@ def get_best_relation ( pattern_list, string ):
 
 # Die Funktion 'get_best_match' gibt den besten String
 # des besten Vergleiches zurueck.
-def get_best_match ( pattern, string_list ):
+def get_best_match( pattern, string_list ):
     string = None
     relation = 0.0
     for current_string in string_list:
@@ -157,7 +174,7 @@ def ports_named_pairing( config_ports_dir, installed_ports ):
 
     return install_config_ports
 
-# get_configed_ports_dir gibt eine sortierte Liste aller bisher
+# get_configed_ports_dir return a sorted list of all configurated ports
 # konfigurierten Ports zurück.
 #
 # 'no_options' contains Ports without 'options'-File
@@ -199,8 +216,13 @@ def get_configed_ports_dir():
 #
 # Falls es kein 'saved_port' gibt speichern ohne versionsnummer
 def get_installed_ports():
-    installed_ports = str( subprocess.check_output( \
-        ['pkg_info', '-a', '-E'] ), 'ascii')
+    try:
+        installed_ports = str( subprocess.check_output( \
+                ['pkg_info', '-a', '-E'] ), 'ascii')
+    except:
+        installed_ports = str( subprocess.check_output( \
+                ['pkg', 'info', '-a', '-E'] ), 'ascii')
+
     installed_ports_list = sorted( installed_ports.splitlines() )
     cnext = False
     saved_port = None
